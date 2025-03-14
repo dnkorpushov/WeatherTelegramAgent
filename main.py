@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import List
 
-from utils import get_weather
+from utils import get_weather, get_city_name_by_coords
 
 
 system_prompt = """
@@ -24,8 +24,8 @@ system_prompt = """
 Твои задачи:
 1. Получи от пользователя название города.
 2. Используй инструмент get_current_weather для получения информации погоде в данном городе.
-3. Сообщи пользователю текущие погодные условия (температуру, облачность, скорость и направление ветра, наличие осадков).
-4. Обязательно дай подробный совет, как одеться пользователю при выходе на улицу исходя из текущих погодных условий.
+3. Сообщи пользователю полученную информацию о погоде: температуру, погодные условия, скорость, направление ветра и дай подробный совет, 
+как одеться пользователю при выходе на улицу исходя из полученной информации о погоде.
 
 Отвечай только на вопросы о погоде и рекомендациях как одеться в такую погоду.
 На другие вопросы отвечай, что не знаешь ответа.
@@ -65,7 +65,7 @@ def get_current_weather(city: str = Field(description="Название горо
    """
    Функция для получения текущей погоды в указанном городе.
    """
-   result = get_weather(openweathermap_api_key, city)
+   result = get_weather(city, openweathermap_api_key)
    return  GetCurrentWeatherResult(weather=result)
 
 
@@ -88,7 +88,9 @@ def start_bot(message):
    """
    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
    repeat_button = types.KeyboardButton("Начать сначала")
+   where_am_i_button = types.KeyboardButton("🌐 Где я?", request_location=True)
    markup.add(repeat_button)
+   markup.add(where_am_i_button)
 
    first_message = f"{message.from_user.first_name}, привет!\nЯ погодный консультант, в каком городе находишся?"
    bot.send_message(message.chat.id, first_message, reply_markup=markup)
@@ -99,6 +101,23 @@ def do_repeat(message):
    Обработчик команды "Начать сначала".
    """
    start_bot(message)
+
+@bot.message_handler(content_types=['location'])
+def get_location(message):
+   """
+   Обработчик сообщений с местоположением.
+   """
+
+   city_name = get_city_name_by_coords(message.location.latitude, 
+                                       message.location.longitude, 
+                                       openweathermap_api_key, lang="ru")
+   if city_name:
+      bot.send_message(message.chat.id, f"Ты в г. {city_name}")
+      message.text = f"Ты в городе {city_name}"
+      answer(message)
+   else:
+      bot.send_message(message.chat.id, "Не удалось определить город.")
+   
 
 @bot.message_handler(content_types=['text'])
 def answer(message):

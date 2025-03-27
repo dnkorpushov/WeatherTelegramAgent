@@ -1,0 +1,4 @@
+dotenv
+telebot
+langchain_gigachat
+langgraph

@@ -31,7 +31,7 @@ system_prompt = """
 
 load_dotenv()
 
-telegram_token = os.getenv("TELEGRAM_TOKEN")
+telegram_token = str(os.getenv("TELEGRAM_TOKEN"))
 gigachat_token = os.getenv("GIGACHAT_TOKEN")
 openweathermap_api_key = os.getenv("OPENWEATHERMAP_API_KEY")
 
@@ -140,5 +140,5 @@ def stop_bot(sig, frame):
 
 if __name__ == "__main__":
    signal.signal(signal.SIGINT, stop_bot)
-   print("Агент готов. Ctrl-C для завершения работы.")
+   print("Агент готов. Ctrl-C для завершения работы.", flush=True)
    bot.infinity_polling()

@@ -59,7 +59,9 @@ class GetCurrentWeatherResult(BaseModel):
 
 
 @giga_tool(few_shot_examples=get_current_weather_examples)
-def get_current_weather(city: str = Field(description="Название города")) -> GetCurrentWeatherResult:
+def get_current_weather(
+city: str = Field(description="Название города")
+   ) -> GetCurrentWeatherResult:
    """
    Функция для получения текущей погоды в указанном городе.
    """
@@ -77,7 +79,10 @@ model = GigaChat(
 
 tools = [get_current_weather]
 model_with_functions = model.bind_functions(tools)
-agent = create_react_agent(model_with_functions, tools=tools, checkpointer=MemorySaver(), state_modifier=system_prompt)
+agent = create_react_agent(model_with_functions, 
+                           tools=tools, 
+                           checkpointer=MemorySaver(), 
+                           state_modifier=system_prompt)
 
 @bot.message_handler(commands=['start'])
 def start_bot(message):
@@ -90,7 +95,8 @@ def start_bot(message):
    markup.add(repeat_button)
    markup.add(where_am_i_button)
 
-   first_message = f"{message.from_user.first_name}, привет!\nЯ погодный консультант, в каком городе находишся?"
+   first_message = (f"{message.from_user.first_name}, привет!\n"
+                    "Я погодный консультант, в каком городе находишся?")
    bot.send_message(message.chat.id, first_message, reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == "Начать сначала")
@@ -111,7 +117,8 @@ def get_location(message):
                                        openweathermap_api_key, lang="ru")
    if city_name:
       bot.send_message(message.chat.id, f"Ты в городе {city_name}")
-      message.text = f"Сообщи погоду в городе {city_name}"
+      message.text = (f"Расскажи о погоде в городе {city_name} и дай совет, "
+                      "как одеться в такую погоду.")
       answer(message)
    else:
       bot.send_message(message.chat.id, "Не удалось определить город.")
@@ -124,10 +131,13 @@ def answer(message):
    """
    config = {"configurable": {"thread_id": message.chat.id}}
    try:
-       response = agent.invoke({"messages": [HumanMessage(content=message.text)]}, config)
+       response = agent.invoke(
+          {"messages": [HumanMessage(content=message.text)]}, 
+          config)
        bot.send_message(message.chat.id, response["messages"][-1].content)
    except:
-       bot.send_message(message.chat.id, "Что-то пошло не так :( Попробуй еще раз.")
+       bot.send_message(message.chat.id, 
+                        "Что-то пошло не так :( Попробуй еще раз.")
 
 def stop_bot(sig, frame):
    """

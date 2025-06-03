@@ -84,7 +84,8 @@ agent = create_react_agent(
     model_with_functions,
     tools=tools,
     checkpointer=MemorySaver(),
-    state_modifier=system_prompt,
+    # state_modifier=system_prompt
+    prompt=system_prompt
 )
 
 
